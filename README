@@ -1,0 +1,7 @@
+Simple wrapper around jetty and daisydiff for fast HTML diffing.
+
+To compile:
+javac -cp servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService.java -Xlint
+
+To run:
+java -cp .:servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService
