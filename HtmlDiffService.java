@@ -72,7 +72,7 @@ public class HtmlDiffService extends AbstractHandler
             String[] css = new String[]{};
             XslFilter filter = new XslFilter();
             ContentHandler postProcess = htmlOut? filter.xsl(result,
-                    "org/outerj/daisy/diff/htmlheader.xsl"):result;
+                    "diff.xsl"):result;
         
             Locale locale = Locale.getDefault();
             String prefix = "diff";
@@ -81,7 +81,9 @@ public class HtmlDiffService extends AbstractHandler
             DomTreeBuilder oldHandler = new DomTreeBuilder();
             
             InputSource oldSource = new InputSource(oldStream);
+            oldSource.setEncoding("UTF-8");
             InputSource newSource = new InputSource(newStream);
+            newSource.setEncoding("UTF-8");
             cleaner.cleanAndParse(oldSource, oldHandler);
         
             TextNodeComparator leftComparator = new TextNodeComparator(oldHandler, locale);
@@ -91,7 +93,7 @@ public class HtmlDiffService extends AbstractHandler
             TextNodeComparator rightComparator = new TextNodeComparator(newHandler, locale);
         
             postProcess.startDocument();
-            postProcess.startElement("", "diffreport", "diffreport", new AttributesImpl());
+            postProcess.startElement("", "div", "div", new AttributesImpl());
             doCSS(css, postProcess);
             postProcess.startElement("", "diff", "diff", new AttributesImpl());
             HtmlSaxDiffOutput output = new HtmlSaxDiffOutput(postProcess, prefix);
@@ -100,7 +102,7 @@ public class HtmlDiffService extends AbstractHandler
             differ.diff(leftComparator, rightComparator);
             
             postProcess.endElement("", "diff", "diff");
-            postProcess.endElement("", "diffreport", "diffreport");
+            postProcess.endElement("", "div", "div");
             postProcess.endDocument();
         } catch (Throwable e) {
             e.printStackTrace();
@@ -115,7 +117,9 @@ public class HtmlDiffService extends AbstractHandler
     private static void doCSS(String[] css, ContentHandler handler) throws SAXException {
         handler.startElement("", "css", "css",
                 new AttributesImpl());
-        for(String cssLink : css){
+        // for(String cssLink : css){
+        for(int i = 0; i < css.length; i++) {
+            String cssLink = css[i];
             AttributesImpl attr = new AttributesImpl();
             attr.addAttribute("", "href", "href", "CDATA", cssLink);
             attr.addAttribute("", "type", "type", "CDATA", "text/css");
@@ -131,7 +135,7 @@ public class HtmlDiffService extends AbstractHandler
     
     public static void main(String[] args) throws Exception
     {
-        Server server = new Server(8080);
+        Server server = new Server(5001);
         server.setHandler(new HtmlDiffService());
  
         server.start();
