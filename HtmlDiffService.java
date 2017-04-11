@@ -45,65 +45,64 @@ public class HtmlDiffService extends AbstractHandler
     public void handle(String target,
                        Request baseRequest,
                        HttpServletRequest request,
-                       HttpServletResponse response) 
         throws IOException, ServletException
     {
         response.setContentType("text/html;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_OK);
         baseRequest.setHandled(true);
-        
+
         boolean htmlOut = false;
-        
+
         try {
             String oldString = request.getParameter("old");
             String newString = request.getParameter("new");
-            
+
             if (oldString == null || newString == null) {
                 return;
             }
-            
+
             InputStream oldStream = new ByteArrayInputStream( oldString.getBytes(  ) );
             InputStream newStream = new ByteArrayInputStream( newString.getBytes(  ) );
-            
+
             SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler result = tf.newTransformerHandler();
             result.setResult(new StreamResult(response.getOutputStream()));
-            
+
             String[] css = new String[]{};
             XslFilter filter = new XslFilter();
             ContentHandler postProcess = htmlOut? filter.xsl(result,
                     "diff.xsl"):result;
-        
+
             Locale locale = Locale.getDefault();
             String prefix = "diff";
-        
+
             HtmlCleaner cleaner = new HtmlCleaner();
             DomTreeBuilder oldHandler = new DomTreeBuilder();
-            
+
             InputSource oldSource = new InputSource(oldStream);
             oldSource.setEncoding("UTF-8");
             InputSource newSource = new InputSource(newStream);
             newSource.setEncoding("UTF-8");
             cleaner.cleanAndParse(oldSource, oldHandler);
-        
+
             TextNodeComparator leftComparator = new TextNodeComparator(oldHandler, locale);
-        
+
             DomTreeBuilder newHandler = new DomTreeBuilder();
             cleaner.cleanAndParse(newSource, newHandler);
             TextNodeComparator rightComparator = new TextNodeComparator(newHandler, locale);
-        
             postProcess.startDocument();
             postProcess.startElement("", "div", "div", new AttributesImpl());
             doCSS(css, postProcess);
             postProcess.startElement("", "diff", "diff", new AttributesImpl());
             HtmlSaxDiffOutput output = new HtmlSaxDiffOutput(postProcess, prefix);
-            
+
+
             HTMLDiffer differ = new HTMLDiffer(output);
             differ.diff(leftComparator, rightComparator);
-            
             postProcess.endElement("", "diff", "diff");
             postProcess.endElement("", "div", "div");
             postProcess.endDocument();
+
         } catch (Throwable e) {
             e.printStackTrace();
             if (e.getCause() != null) {
@@ -132,15 +131,15 @@ public class HtmlDiffService extends AbstractHandler
         handler.endElement("", "css", "css");
         
     }
-    
+
     public static void main(String[] args) throws Exception
     {
         Server server = new Server(5001);
         server.setHandler(new HtmlDiffService());
- 
+
         server.start();
         server.join();
     }
-    
-    
+
+
 }
