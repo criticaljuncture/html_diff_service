@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.util.Locale;
 
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.OutputKeys;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
@@ -45,6 +46,7 @@ public class HtmlDiffService extends AbstractHandler
     public void handle(String target,
                        Request baseRequest,
                        HttpServletRequest request,
+                       HttpServletResponse response)
         throws IOException, ServletException
     {
         response.setContentType("text/html;charset=utf-8");
@@ -66,12 +68,11 @@ public class HtmlDiffService extends AbstractHandler
 
             SAXTransformerFactory tf = (SAXTransformerFactory) TransformerFactory.newInstance();
             TransformerHandler result = tf.newTransformerHandler();
+            result.getTransformer().setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
             result.setResult(new StreamResult(response.getOutputStream()));
 
             String[] css = new String[]{};
             XslFilter filter = new XslFilter();
-            ContentHandler postProcess = htmlOut? filter.xsl(result,
-                    "diff.xsl"):result;
 
             Locale locale = Locale.getDefault();
             String prefix = "diff";
@@ -90,19 +91,14 @@ public class HtmlDiffService extends AbstractHandler
             DomTreeBuilder newHandler = new DomTreeBuilder();
             cleaner.cleanAndParse(newSource, newHandler);
             TextNodeComparator rightComparator = new TextNodeComparator(newHandler, locale);
-            postProcess.startDocument();
-            postProcess.startElement("", "div", "div", new AttributesImpl());
-            doCSS(css, postProcess);
-            postProcess.startElement("", "diff", "diff", new AttributesImpl());
-            HtmlSaxDiffOutput output = new HtmlSaxDiffOutput(postProcess, prefix);
 
+            result.startDocument();
+            HtmlSaxDiffOutput output = new HtmlSaxDiffOutput(result, prefix);
 
             HTMLDiffer differ = new HTMLDiffer(output);
             differ.diff(leftComparator, rightComparator);
-            postProcess.endElement("", "diff", "diff");
-            postProcess.endElement("", "div", "div");
-            postProcess.endDocument();
 
+            result.endDocument();
         } catch (Throwable e) {
             e.printStackTrace();
             if (e.getCause() != null) {
@@ -112,24 +108,6 @@ public class HtmlDiffService extends AbstractHandler
                 ((SAXException) e).getException().printStackTrace();
             }
         }
-    }
-    private static void doCSS(String[] css, ContentHandler handler) throws SAXException {
-        handler.startElement("", "css", "css",
-                new AttributesImpl());
-        // for(String cssLink : css){
-        for(int i = 0; i < css.length; i++) {
-            String cssLink = css[i];
-            AttributesImpl attr = new AttributesImpl();
-            attr.addAttribute("", "href", "href", "CDATA", cssLink);
-            attr.addAttribute("", "type", "type", "CDATA", "text/css");
-            attr.addAttribute("", "rel", "rel", "CDATA", "stylesheet");
-            handler.startElement("", "link", "link",
-                    attr);
-            handler.endElement("", "link", "link");
-        }
-        
-        handler.endElement("", "css", "css");
-        
     }
 
     public static void main(String[] args) throws Exception
