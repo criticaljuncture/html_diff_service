@@ -1,7 +1,24 @@
 Simple wrapper around jetty and daisydiff for fast HTML diffing.
 
 To compile:
-javac -cp servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService.java -Xlint
+`javac -cp servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService.java -Xlint`
 
 To run:
-java -cp .:servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService
+`java -cp .:servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService`
+
+To run docker container:
+`docker run -d --publish 5001:5001 html_diff_service`
+
+To get service diff output:
+
+```
+$ curl -D - -X POST -d 'new=goodbye world champion&old=hello world leader' 127.0.0.1:5001/api/diff/v1
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Transfer-Encoding: chunked
+Server: Jetty(7.0.2.v20100331)
+
+<span class="diff-html-removed" id="removed-diff-0" previous="first-diff" changeId="removed-diff-0" next="added-diff-0">hello </span><span class="diff-html-added" id="added-diff-0" previous="removed-diff-0" changeId="added-diff-0" next="removed-diff-1">goodbye </span>world <span class="diff-html-removed" id="removed-diff-1" previous="added-diff-0" changeId="removed-diff-1" next="added-diff-1">leader</span><span class="diff-html-added" id="added-diff-1" previous="removed-diff-1" changeId="added-diff-1" next="last-diff">champion</span>
+````
+
+logs are saved to `/var/log/html_diff_service/html_diff_service.log`
