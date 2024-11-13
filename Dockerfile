@@ -11,4 +11,4 @@ RUN javac -cp servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService.java -Xlint
 RUN touch /var/log/html_diff_service/html_diff_service.log
 
 EXPOSE 5001
-CMD java -cp .:servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService > /var/log/html_diff_service/html_diff_service.log 2>&1
+CMD java -cp -XX:ActiveProcessorCount=2 -Xms900M -Xmx1200M .:servlet.jar:jetty.jar:daisydiff.jar HtmlDiffService > /var/log/html_diff_service/html_diff_service.log 2>&1
